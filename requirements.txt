@@ -1,0 +1,5 @@
+pandas
+geopandas
+requests
+mailchimp-marketing
+boto
