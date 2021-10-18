@@ -4,6 +4,10 @@ import requests
 import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
 import time
+import logging
+import os
+
+logging.basicConfig(filename='geocoder.log', encoding='utf=8', level=logging.DEBUG)
 
 from boto.s3.connection import S3Connection
 mailchimp_api_key = S3Connection(os.environ['MAILCHIMP_API_KEY'])
@@ -27,7 +31,7 @@ try:
     response = client.lists.get_all_lists()
 #   print(response)
 except ApiClientError as error:
-    print("Error: {}".format(error.text))
+    logging.info("Error: {}".format(error.text))
 
 sfa_list_id = response['lists'][0]['id']
 
@@ -54,16 +58,16 @@ def geocode_subscriber(subscriber_id):
                                               subscriber_hash=subscriber_id)
     address_fields = subscriber['merge_fields']['ADDRESSYU']
     if not address_fields:
-        print(f'no address for: {subscriber["full_name"]}, {subscriber["email_address"]}')
+        logging.info(f'no address for: {subscriber["full_name"]}, {subscriber["email_address"]}')
         return
         ## quick fix for missing state info
 #     print(address_fields)
     if (address_fields['zip'][0] == '9') and not address_fields['state']:
         address_fields['state'] = 'CA'
-        print('updating-->', end='')
+        logging.info('updating-->', end='')
     address = ' '.join(
             [address_fields['addr1'], address_fields['city'], address_fields['state'], address_fields['zip']])
-    print(address)
+    logging.info(address)
 
     geocoded = geocode(address)
     
@@ -94,17 +98,17 @@ def geocode_subscriber(subscriber_id):
             client.lists.update_list_member(
                 list_id=mailchimp_list, subscriber_hash=subscriber_id, body=subscriber)
         except ApiClientError as error:
-            print("Error: {}".format(error.text))
+            logging.info("Error: {}".format(error.text))
         return 
 
 for offset in range(0,1801,200):
-    print(offset)
+    logging.info(offset)
     members = client.lists.get_list_members_info(mailchimp_list, count=200, offset=offset)
     for member in members['members']:
         try:
             geocode_subscriber(member['id'])
         except:
-            print(f'geocode failed for {member["full_name"]}')
+            logging.info(f'geocode failed for {member["full_name"]}')
             
 
 def add_senator(subscriber_id):
@@ -120,18 +124,18 @@ def add_senator(subscriber_id):
         client.lists.update_list_member(
             list_id=mailchimp_list, subscriber_hash=subscriber_id, body=subscriber)
     except ApiClientError as error:
-        print("Error: {}".format(error.text))
+        logging.info("Error: {}".format(error.text))
     return
     
 for offset in range(0,1801,200):
-    print(offset)
+    logging.info(offset)
     members = client.lists.get_list_members_info(mailchimp_list, count=200, offset=offset)
     for member in members['members']:
         time.sleep(.1)
         try:
             add_senator(member['id'])
         except:
-            print(f'failed for member {member["full_name"]}')
+            logging.info(f'failed for member {member["full_name"]}')
             
 assemblymembers['Dist'] = assemblymembers['Dist'].apply(lambda x: x[:3]).astype('int64')
 assemblymembers = assemblymembers.set_index('Dist')
@@ -151,15 +155,17 @@ def add_assembly(subscriber_id):
         client.lists.update_list_member(
             list_id=mailchimp_list, subscriber_hash=subscriber_id, body=subscriber)
     except ApiClientError as error:
-        print("Error: {}".format(error.text))
+        logging.info("Error: {}".format(error.text))
     return
     
 for offset in range(0,1801,200):
-    print(offset)
+    logging.info(offset)
     members = client.lists.get_list_members_info(mailchimp_list, count=200, offset=offset)
     for member in members['members']:
         time.sleep(.1)
         try:
             add_assembly(member['id'])
         except:
-            print(f'could not add assemblymember for member {member["full_name"]}, id:{member["id"]}')
+            logging.info(f'could not add assemblymember for member {member["full_name"]}, id:{member["id"]}')
+
+os.system('shutdown -h now')
