@@ -10,10 +10,13 @@ import os
 logging.basicConfig(filename='geocoder.log', encoding='utf=8', level=logging.DEBUG)
 
 from boto.s3.connection import S3Connection
-mailchimp_api_key = S3Connection(os.environ['MAILCHIMP_API_KEY'])
-eric_g_maps_key = S3Connection(os.environ['ERIC_GOOGLE_MAPS_KEY'])
-mailchimp_list = S3Connection(os.environ['MAILCHIMP_LIST'])
+#mailchimp_api_key = S3Connection(os.environ['MAILCHIMP_API_KEY'])
+#eric_g_maps_key = S3Connection(os.environ['ERIC_GOOGLE_MAPS_KEY'])
+#mailchimp_list = S3Connection(os.environ['MAILCHIMP_LIST'])
 
+mailchimp_api_key = os.environ['MAILCHIMP_API_KEY']
+eric_g_maps_key = os.environ['ERIC_GOOGLE_MAPS_KEY']
+mailchimp_list = os.environ['MAILCHIMP_LIST']
 
 boundaries = gpd.read_file('./Political Boundaries v1/LA Political Boundaries.shp')
 cogs = gpd.read_file('./Regional_Council_Districts_–_SCAG_Region.geojson')
